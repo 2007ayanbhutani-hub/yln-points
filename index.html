@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>YLN Points</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a stable alphabetical roster on the left, a live ranked leaderboard on the right; tabs swap them on phones. Editing hides behind an admin code. */
+:root {
+  --bg: #F3F6FA;
+  --surface: #FFFFFF;
+  --ink: #14213A;
+  --muted: #5B6680;
+  --line: #DCE2EC;
+  --accent: #2F5BEA;
+  --c-break: #C2362B;
+  --c-discuss: #7A4FD6;
+  --c-valid: #13865A;
+  --c-first: #C27A00;
+  --c-phone: #C2306E;
+  --c-talk: #A35A10;
+  --tint: 12%;
+  --danger: #C2362B;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1420; --surface: #161F31; --ink: #E7ECF5; --muted: #95A2BA; --line: #27324A;
+    --accent: #7C97FF;
+    --c-break: #FF7A6E; --c-discuss: #B08CFF; --c-valid: #45C98F; --c-first: #F2B23C; --c-phone: #FF7FB6; --c-talk: #F0A050;
+    --tint: 18%; --danger: #FF7A6E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1420; --surface: #161F31; --ink: #E7ECF5; --muted: #95A2BA; --line: #27324A;
+  --accent: #7C97FF;
+  --c-break: #FF7A6E; --c-discuss: #B08CFF; --c-valid: #45C98F; --c-first: #F2B23C; --c-phone: #FF7FB6; --c-talk: #F0A050;
+  --tint: 18%; --danger: #FF7A6E;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 96px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px 24px; }
+.brand h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 5vw, 44px); line-height: 1; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.brand p { margin: 6px 0 0; color: var(--muted); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.stepper, .seg { display: inline-flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.stepper button { width: 34px; height: 34px; border: 0; background: transparent; border-radius: 999px; font-size: 18px; }
+.stepper button:hover { background: color-mix(in srgb, var(--accent) var(--tint), transparent); }
+.stepper button:disabled { opacity: .35; cursor: default; background: transparent; }
+.stepper span { min-width: 92px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.adminBtn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 8px 16px; font-weight: 700; }
+.adminBtn.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+
+.adminPanel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; max-width: 520px; justify-self: end; width: 100%; }
+.adminPanel h3 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.adminPanel p { margin: 0; color: var(--muted); font-size: 13.5px; }
+.adminPanel form { display: flex; flex-wrap: wrap; gap: 8px; }
+.adminPanel input { flex: 1 1 140px; min-width: 0; font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); letter-spacing: .15em; }
+.err { color: var(--danger); font-size: 13.5px; font-weight: 600; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 13.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.dot { width: 10px; height: 10px; border-radius: 3px; background: var(--c); flex: none; }
+
+.tabs { display: none; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0; }
+.panel-head small { color: var(--muted); font-size: 13px; }
+
+.roster { list-style: none; margin: 0; padding: 0; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 14px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.who .name { font-weight: 600; overflow-wrap: anywhere; }
+.total { margin-left: auto; font-family: var(--font-display); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }
+.btns { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.box { --c: var(--accent); position: relative; display: flex; }
+.award {
+  flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+  background: color-mix(in srgb, var(--c) var(--tint), var(--surface));
+  border-radius: 10px; padding: 6px 9px; text-align: left; min-height: 50px;
+  transition: transform .08s ease, background .15s ease;
+}
+.award .lab { font-size: 12px; font-weight: 700; color: var(--c); line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
+.award .n { font-weight: 700; font-size: 17px; font-variant-numeric: tabular-nums; }
+.award:disabled { cursor: default; color: var(--ink); }
+.editing .award:hover { background: color-mix(in srgb, var(--c) calc(var(--tint) + 10%), var(--surface)); }
+.editing .award:active { transform: scale(.96); }
+.editing .award .n::before { content: attr(data-sign) "  "; color: var(--muted); font-weight: 500; font-size: 12px; white-space: pre; }
+.editing .award { padding-right: 36px; }
+.minus {
+  position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  background: var(--surface); color: var(--c); font-weight: 800; font-size: 18px; line-height: 1; display: grid; place-items: center;
+}
+.minus:hover { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); color: var(--danger); border-color: var(--danger); }
+.minus:disabled { opacity: .3; cursor: default; background: var(--surface); color: var(--c); border-color: color-mix(in srgb, var(--c) 45%, transparent); }
+.award.pop { animation: pop .35s ease; }
+@keyframes pop { 40% { transform: scale(1.07); background: color-mix(in srgb, var(--c) 35%, var(--surface)); } }
+
+.board { list-style: none; margin: 0; padding: 6px 0; }
+.lb { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; padding: 8px 16px; }
+.lb .rank { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lb.top .rank { color: var(--accent); }
+.lb .nm { font-weight: 600; overflow-wrap: anywhere; }
+.lb .pts { font-family: var(--font-display); font-weight: 800; font-size: 18px; font-variant-numeric: tabular-nums; }
+.bar { grid-column: 2 / 4; display: flex; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 14%, transparent); overflow: hidden; }
+.pen { display: inline-block; font-size: 11.5px; font-weight: 700; color: var(--c-break); background: color-mix(in srgb, var(--c-break) var(--tint), transparent); border-radius: 5px; padding: 1px 6px; vertical-align: 1px; white-space: nowrap; }
+.bar i { display: block; height: 100%; background: var(--c); }
+.empty { padding: 18px 16px; color: var(--muted); }
+
+.foot { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 13px; }
+.foot .acts { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.link { border: 0; background: none; padding: 4px 0; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; color: var(--muted); }
+.link.danger { color: var(--danger); }
+.link:disabled { opacity: .4; cursor: default; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--ink); }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn.danger { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 14px; max-width: calc(100% - 32px);
+  background: var(--ink); color: var(--bg); padding: 10px 12px 10px 16px; border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.22); z-index: 20;
+}
+.toast button { border: 0; background: color-mix(in srgb, var(--bg) 18%, transparent); color: var(--bg); padding: 6px 12px; border-radius: 7px; font-weight: 700; }
+.note { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 860px) {
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .tabs { display: inline-flex; }
+  .cols[data-tab="award"] #boardPanel, .cols[data-tab="board"] #awardPanel { display: none; }
+}
+@media (max-width: 560px) {
+  .btns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .award, .award.pop { animation: none; transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>YLN Points</h1>
+      <p id="sub">Live scores for every session.</p>
+    </div>
+    <div class="controls">
+      <div class="stepper" aria-label="Session">
+        <button id="prevS" type="button" aria-label="Previous session">‹</button>
+        <span id="sLabel">Session 1</span>
+        <button id="nextS" type="button" aria-label="Next session">›</button>
+      </div>
+      <div class="seg" role="group" aria-label="Show points for">
+        <button id="vSession" type="button" aria-pressed="true">This session</button>
+        <button id="vAll" type="button" aria-pressed="false">All sessions</button>
+      </div>
+      <button class="adminBtn" id="adminBtn" type="button" hidden>Admin</button>
+    </div>
+  </header>
+
+  <div class="adminPanel" id="adminPanel" hidden></div>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="seg tabs" role="group" aria-label="View">
+    <button id="tBoard" type="button" aria-pressed="true">Leaderboard</button>
+    <button id="tAward" type="button" aria-pressed="false">Points by student</button>
+  </div>
+
+  <div class="cols" id="cols" data-tab="board">
+    <section class="panel" id="awardPanel">
+      <div class="panel-head"><h2 id="awardTitle">Points by student</h2><small id="awardMeta"></small></div>
+      <ul class="roster" id="roster"></ul>
+    </section>
+    <section class="panel" id="boardPanel">
+      <div class="panel-head"><h2>Leaderboard</h2><small id="boardMeta"></small></div>
+      <ol class="board" id="board"></ol>
+    </section>
+  </div>
+
+  <div class="foot">
+    <span class="note" id="status">Loading scores…</span>
+    <span class="acts" id="footActs"></span>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden><span id="toastText"></span><button id="undoBtn" type="button">Undo</button></div>
+
+<script type="module">
+/* Firebase project: yln-points. The admin code unlocks editing by signing in as ADMIN_EMAIL. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB7eKc2aRJqdJQ-jafuushW9HU7nvS-exo",
+  authDomain: "yln-points.firebaseapp.com",
+  projectId: "yln-points",
+  storageBucket: "yln-points.firebasestorage.app",
+  messagingSenderId: "1043044982114",
+  appId: "1:1043044982114:web:234eebb385caeec391203b"
+};
+const ADMIN_EMAIL = "admin@yln-points.app";
+const codeToPassword = code => "yln-points-" + code.trim();
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, setPersistence, browserSessionPersistence, signInWithEmailAndPassword, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const STUDENTS = [
+  "Abdulla Alfardan","Ahmed Al Najjar","Ahmed Alkaabi","Bilal Hujjutallah","Eyad Sanad",
+  "Hamed Alhamed","Mohammed Alharmoodi","Okein Khoury","Saleh Alsuwaidi","Sameer Alkhatib",
+  "Saqer Almaskari","Zainul Saifi","Zayed AlHosani","Nicolas Ruiz","Mohammad Aun Raza"
+].sort((a,b)=>a.localeCompare(b)).map(n => ({ id: n.toLowerCase().replace(/[^a-z0-9]+/g,"-"), name: n }));
+
+const CATS = [
+  { k: "discuss", label: "Discussion",  desc: "joined the discussion", pts: 1 },
+  { k: "valid",   label: "Outstanding point", desc: "made an outstanding point", pts: 3 },
+  { k: "first",   label: "Came first",  desc: "came first in an activity", pts: 5 },
+  { k: "break",   label: "Long break",  desc: "bathroom break longer than 10 mins", pts: -4 },
+  { k: "phone",   label: "Using phone", desc: "on their phone during the session", pts: -3 },
+  { k: "talk",    label: "Talking out of turn", desc: "spoke when it wasn't their turn", pts: -2 },
+];
+// Each entry stores the points it was worth when given, so later rule changes don't rewrite history.
+const ptsOf = ev => typeof ev.pts === "number" ? ev.pts : (CATS.find(c => c.k === ev.cat) || { pts: 0 }).pts;
+
+const ls = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { return null; } };
+const $ = id => document.getElementById(id);
+
+let events = new Map();          // id -> {student, cat, session, t}
+let session = Number(ls("yln-session")) || 1;
+let view = "session";
+let db = null, auth = null;
+let unlocked = false, firstLoad = true;
+let undoStack = [], toastTimer = null, confirming = false, panelMode = null;
+
+const editing = () => unlocked;
+
+/* ---------- static UI ---------- */
+CATS.forEach(c => {
+  const s = document.createElement("span");
+  s.style.setProperty("--c", `var(--c-${c.k})`);
+  s.innerHTML = `<i class="dot"></i>`;
+  s.append(`${c.label}: ${c.desc} (${c.pts > 0 ? "+" : "−"}${Math.abs(c.pts)} pt${Math.abs(c.pts) === 1 ? "" : "s"})`);
+  $("legend").append(s);
+});
+
+const rowEls = {};
+STUDENTS.forEach(st => {
+  const li = document.createElement("li"); li.className = "row";
+  const who = document.createElement("div"); who.className = "who";
+  const nm = document.createElement("span"); nm.className = "name"; nm.textContent = st.name;
+  const tot = document.createElement("span"); tot.className = "total"; tot.textContent = "0";
+  who.append(nm, tot);
+  const btns = document.createElement("div"); btns.className = "btns";
+  const counts = {};
+  CATS.forEach(c => {
+    const box = document.createElement("div"); box.className = "box";
+    box.style.setProperty("--c", `var(--c-${c.k})`);
+    const b = document.createElement("button"); b.type = "button"; b.className = "award";
+    b.dataset.sign = (c.pts > 0 ? "+" : "−") + Math.abs(c.pts);
+    b.setAttribute("aria-label", c.pts > 0 ? `Give ${st.name} ${c.pts} point${c.pts === 1 ? "" : "s"} for ${c.label}` : `Take ${Math.abs(c.pts)} points from ${st.name} for ${c.label}`);
+    const lab = document.createElement("span"); lab.className = "lab"; lab.textContent = c.label;
+    const n = document.createElement("span"); n.className = "n"; n.textContent = "0";
+    b.append(lab, n);
+    b.addEventListener("click", () => { if (!editing()) return; award(st.id, c.k); b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); });
+    const m = document.createElement("button"); m.type = "button"; m.className = "minus"; m.textContent = c.pts > 0 ? "−" : "↺";
+    m.title = c.pts > 0 ? `Remove one ${c.label} point` : `Cancel one ${c.label} penalty`;
+    m.setAttribute("aria-label", c.pts > 0 ? `Remove one ${c.label} point from ${st.name}` : `Cancel one ${c.label} penalty for ${st.name}`);
+    m.addEventListener("click", () => removeOne(st.id, c.k));
+    box.append(b, m); btns.append(box);
+    counts[c.k] = { n, b, m };
+  });
+  li.append(who, btns); $("roster").append(li);
+  rowEls[st.id] = { tot, counts };
+});
+
+/* ---------- data writes ---------- */
+const nameOf = id => STUDENTS.find(s => s.id === id).name;
+const labelOf = k => CATS.find(c => c.k === k).label;
+
+async function award(student, cat) {
+  const ev = { student, cat, session, pts: CATS.find(c => c.k === cat).pts, t: Date.now() };
+  const v = CATS.find(c => c.k === cat).pts;
+  showToast(`${v > 0 ? "+" : "−"}${Math.abs(v)} ${labelOf(cat)} · ${nameOf(student)}`);
+  const ref = doc(collection(db, "awards"));
+  undoStack.push(ref.id);
+  try { await setDoc(ref, ev); } catch (e) { undoStack = undoStack.filter(x => x !== ref.id); writeError(e); }
+}
+
+async function deleteAward(id) {
+  try { await deleteDoc(doc(db, "awards", id)); } catch (e) { writeError(e); }
+}
+
+function removeOne(student, cat) {
+  if (!editing()) return;
+  const hits = [...events].filter(([, e]) => e.student === student && e.cat === cat && (view === "all" || e.session === session))
+    .sort((a, b) => b[1].t - a[1].t);
+  if (!hits.length) return;
+  const [id] = hits[0];
+  undoStack = undoStack.filter(x => x !== id);
+  hideToast();
+  deleteAward(id);
+}
+
+function undo() {
+  const id = undoStack.pop(); hideToast();
+  if (id && editing()) deleteAward(id);
+}
+
+function writeError(e) {
+  if (e && e.code === "permission-denied") { setStatus("That change was refused. Lock and unlock with your code, then try again."); }
+  else setStatus("That change didn't save. Check your connection and try again.");
+}
+
+/* ---------- admin lock (Firebase sign-in; the code is the password) ---------- */
+function openPanel(mode) { panelMode = mode; renderPanel(); }
+function closePanel() { panelMode = null; $("adminPanel").hidden = true; }
+
+function authMessage(e) {
+  const c = e && e.code || "";
+  if (c.includes("too-many-requests")) return "Too many wrong tries. Wait a few minutes, then try again.";
+  if (c.includes("network")) return "No connection. Check your internet and try again.";
+  if (c.includes("requires-recent-login")) return "For safety, lock, unlock with your current code, then change it again.";
+  return "That code isn't right.";
+}
+
+function renderPanel() {
+  const p = $("adminPanel"); p.textContent = ""; p.hidden = !panelMode;
+  if (!panelMode) return;
+  const h = document.createElement("h3"); const d = document.createElement("p");
+  const f = document.createElement("form"); const err = document.createElement("div"); err.className = "err";
+  const mk = (id, ph) => { const i = document.createElement("input"); i.id = id; i.type = "password"; i.placeholder = ph; i.autocomplete = "off"; i.inputMode = "numeric"; return i; };
+  const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "btn"; cancel.textContent = "Cancel"; cancel.onclick = closePanel;
+  const go = document.createElement("button"); go.type = "submit"; go.className = "btn primary";
+
+  if (panelMode === "change") {
+    h.textContent = "Change your admin code";
+    d.textContent = "You'll type this code whenever you want to give or remove points. At least 4 characters.";
+    const a = mk("codeNew", "New code"), b = mk("codeAgain", "Type it again");
+    go.textContent = "Save code";
+    f.append(a, b, go, cancel);
+    f.onsubmit = async ev => {
+      ev.preventDefault();
+      if (a.value.trim().length < 4) { err.textContent = "Use at least 4 characters."; return; }
+      if (a.value.trim() !== b.value.trim()) { err.textContent = "The two codes don't match."; return; }
+      go.disabled = true;
+      try { await updatePassword(auth.currentUser, codeToPassword(a.value)); closePanel(); setStatus("Code changed. Use the new code next time."); }
+      catch (e) { err.textContent = authMessage(e); go.disabled = false; }
+    };
+    setTimeout(() => a.focus(), 0);
+  } else {
+    h.textContent = "Enter admin code";
+    d.textContent = "Unlocks giving and removing points on this device until you lock it or close the tab.";
+    const a = mk("codeEnter", "Admin code");
+    go.textContent = "Unlock";
+    f.append(a, go, cancel);
+    f.onsubmit = async ev => {
+      ev.preventDefault();
+      if (!a.value.trim()) return;
+      go.disabled = true; err.textContent = "";
+      try { await signInWithEmailAndPassword(auth, ADMIN_EMAIL, codeToPassword(a.value)); closePanel(); }
+      catch (e) { err.textContent = authMessage(e); a.select(); go.disabled = false; }
+    };
+    setTimeout(() => a.focus(), 0);
+  }
+  p.append(h, d, f, err);
+}
+
+$("adminBtn").onclick = async () => {
+  if (unlocked) { hideToast(); confirming = false; closePanel(); undoStack = []; await signOut(auth); return; }
+  if (panelMode) { closePanel(); return; }
+  openPanel("enter");
+};
+
+/* ---------- render ---------- */
+function tally() {
+  const per = {}; STUDENTS.forEach(s => { per[s.id] = { total: 0, plus: 0, minus: 0 }; CATS.forEach(c => per[s.id][c.k] = 0); });
+  let maxSession = 1, n = 0;
+  for (const ev of events.values()) {
+    if (ev.session > maxSession) maxSession = ev.session;
+    if (view === "session" && ev.session !== session) continue;
+    if (!per[ev.student] || !(ev.cat in per[ev.student])) continue;
+    const v = ptsOf(ev); per[ev.student][ev.cat]++; per[ev.student].total += v; if (v > 0) per[ev.student].plus += v; else per[ev.student].minus -= v; n++;
+  }
+  return { per, maxSession, n };
+}
+
+function render() {
+  const ed = editing();
+  const { per, maxSession, n } = tally();
+  document.body.classList.toggle("editing", ed);
+  $("sLabel").textContent = `Session ${session}`;
+  $("prevS").disabled = session <= 1;
+  $("nextS").disabled = ed ? session > maxSession : session >= maxSession;
+  const scope = view === "session" ? `Session ${session}` : "All sessions";
+  $("awardMeta").textContent = `${scope} · ${n} entr${n === 1 ? "y" : "ies"}`;
+  $("boardMeta").textContent = scope;
+  $("awardTitle").textContent = ed ? "Give or remove points" : "Points by student";
+  $("tAward").textContent = ed ? "Give points" : "Points by student";
+  $("sub").textContent = ed ? "Admin mode: tap a box to add a point, − to remove one." : "Live scores for every session.";
+
+  const ab = $("adminBtn");
+  ab.hidden = !db;
+  ab.textContent = unlocked ? "Lock" : "Admin";
+  ab.classList.toggle("on", unlocked);
+
+  STUDENTS.forEach(s => {
+    const r = rowEls[s.id], p = per[s.id];
+    r.tot.textContent = p.total;
+    CATS.forEach(c => {
+      const x = r.counts[c.k];
+      x.n.textContent = p[c.k];
+      x.b.disabled = !ed;
+      x.m.hidden = !ed;
+      x.m.disabled = p[c.k] === 0;
+    });
+  });
+
+  const ranked = STUDENTS.map(s => ({ ...s, ...per[s.id] })).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+  const board = $("board"); board.textContent = "";
+  if (n === 0) {
+    const li = document.createElement("li"); li.className = "empty";
+    li.textContent = view === "session" ? `No points yet in Session ${session}.` : "No points given yet.";
+    board.append(li);
+  } else {
+    const max = Math.max(1, ...ranked.map(s => s.plus)); let rank = 0, prev = null;
+    ranked.forEach((s, i) => {
+      if (s.total !== prev) { rank = i + 1; prev = s.total; }
+      const li = document.createElement("li"); li.className = "lb" + (rank === 1 && s.total > 0 ? " top" : "");
+      const rk = document.createElement("span"); rk.className = "rank"; rk.textContent = rank;
+      const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = s.name;
+      if (s.minus) {
+        const pen = document.createElement("span"); pen.className = "pen";
+        pen.textContent = `−${s.minus} penalty pts`;
+        pen.title = CATS.filter(c => c.pts < 0 && s[c.k]).map(c => `${c.label} ×${s[c.k]}`).join(" · ");
+        nm.append(" ", pen);
+      }
+      const pts = document.createElement("span"); pts.className = "pts"; pts.textContent = s.total;
+      const bar = document.createElement("span"); bar.className = "bar";
+      bar.title = CATS.map(c => `${c.label}: ${s[c.k]}`).join(" · ");
+      CATS.forEach(c => { if (!s[c.k] || c.pts < 0) return; const seg = document.createElement("i"); seg.style.setProperty("--c", `var(--c-${c.k})`); seg.style.width = (s[c.k] / max * 100) + "%"; bar.append(seg); });
+      li.append(rk, nm, pts, bar); board.append(li);
+    });
+  }
+  renderFoot();
+}
+
+function renderFoot() {
+  const area = $("footActs"); area.textContent = "";
+  if (!editing()) return;
+  const sessionIds = [...events].filter(([, e]) => e.session === session).map(([id]) => id);
+  if (!confirming) {
+    const ch = document.createElement("button"); ch.className = "link"; ch.type = "button"; ch.textContent = "Change code";
+    ch.onclick = () => openPanel("change");
+    const b = document.createElement("button"); b.className = "link danger"; b.type = "button";
+    b.textContent = `Clear Session ${session}`; b.disabled = sessionIds.length === 0;
+    b.onclick = () => { confirming = true; renderFoot(); };
+    area.append(ch, b);
+  } else {
+    const box = document.createElement("span"); box.className = "confirm";
+    box.append(`Delete all ${sessionIds.length} entries from Session ${session}?`);
+    const yes = document.createElement("button"); yes.className = "btn danger"; yes.type = "button"; yes.textContent = "Delete";
+    const no = document.createElement("button"); no.className = "btn"; no.type = "button"; no.textContent = "Cancel";
+    yes.onclick = async () => {
+      confirming = false; undoStack = undoStack.filter(id => !sessionIds.includes(id)); hideToast();
+      for (const id of sessionIds) { try { await deleteDoc(doc(db, "awards", id)); } catch (e) { writeError(e); break; } }
+      render();
+    };
+    no.onclick = () => { confirming = false; renderFoot(); };
+    box.append(yes, no); area.append(box);
+  }
+}
+
+/* ---------- toast / status ---------- */
+function showToast(text) { $("toastText").textContent = text; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 5000); }
+function hideToast() { $("toast").hidden = true; }
+function setStatus(t) { $("status").textContent = t; }
+$("undoBtn").onclick = undo;
+
+/* ---------- controls ---------- */
+$("prevS").onclick = () => { if (session > 1) { session--; ls("yln-session", session); confirming = false; render(); } };
+$("nextS").onclick = () => { session++; ls("yln-session", session); confirming = false; render(); };
+const setView = v => { view = v; $("vSession").setAttribute("aria-pressed", v === "session"); $("vAll").setAttribute("aria-pressed", v === "all"); render(); };
+$("vSession").onclick = () => setView("session");
+$("vAll").onclick = () => setView("all");
+const setTab = t => { $("cols").dataset.tab = t; $("tAward").setAttribute("aria-pressed", t === "award"); $("tBoard").setAttribute("aria-pressed", t === "board"); };
+$("tAward").onclick = () => setTab("award");
+$("tBoard").onclick = () => setTab("board");
+
+/* ---------- boot ---------- */
+render();
+if (FIREBASE_CONFIG.apiKey === "PASTE_HERE") {
+  setStatus("Setup not finished: the Firebase settings haven't been added to this page yet.");
+} else {
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    await setPersistence(auth, browserSessionPersistence);
+    onAuthStateChanged(auth, u => {
+      unlocked = !!u;
+      if (!unlocked) { confirming = false; undoStack = []; }
+      render();
+      setStatus(unlocked ? "Admin mode. Changes save automatically." : "Scores update live.");
+    });
+    onSnapshot(collection(db, "awards"), snap => {
+      const m = new Map();
+      snap.docs.forEach(d => m.set(d.id, d.data()));
+      events = m;
+      const max = Math.max(1, ...[...m.values()].map(e => e.session || 1));
+      if (firstLoad) { if (!unlocked) session = max; firstLoad = false; }
+      else if (!unlocked && session > max) session = max;
+      render();
+    }, () => setStatus("Couldn't load the scores. Reload the page to try again."));
+  } catch (e) {
+    setStatus("Couldn't connect to the database. Check the Firebase settings at the top of the page.");
+  }
+}
+</script>
+</body>
+</html>
